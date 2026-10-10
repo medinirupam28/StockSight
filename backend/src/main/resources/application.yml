@@ -1,0 +1,35 @@
+server:
+  port: ${PORT:8080}
+spring:
+  profiles:
+    default: dev
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 1
+    clean-disabled: true
+    validate-on-migrate: true
+  jackson:
+    default-property-inclusion: non_null
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+app:
+  llm:
+    url: ${LLM_API_URL:}
+    key: ${LLM_API_KEY:}
+    model: ${LLM_MODEL:}
+logging:
+  level:
+    com.stocksight: INFO
+    org.springframework.security: INFO
