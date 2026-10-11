@@ -29,6 +29,10 @@ public class ApiExceptionHandler {
     }
     @ExceptionHandler(Exception.class)
     ResponseEntity<?> internal(Exception ex) {
-        return ResponseEntity.status(500).body(Map.of("error", "Unexpected server error."));
-    }
+        System.err.println("UNHANDLED BACKEND ERROR:");
+            ex.printStackTrace();
+    return ResponseEntity.status(500)
+            .body(Map.of("error", "Unexpected server error"));
+}
+
 }
