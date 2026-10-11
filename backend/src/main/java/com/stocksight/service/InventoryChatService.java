@@ -79,10 +79,13 @@ public class InventoryChatService {
                     contextSummary, "lexical-rag");
             }
             return response(answer, contextSummary, "lexical-rag");
-        } catch (RestClientException ex) {
-            return response("The configured AI provider is temporarily unavailable. Retrieved inventory context is available, but no generated answer was returned.",
-                contextSummary, "lexical-rag");
-        }
+        } 
+catch (RestClientException e) {
+    System.err.println("AI provider request failed: " + e.getMessage());
+    return response(    "The AI provider request failed. Check backend logs for details.",
+        contextSummary, "lexical-rag");
+}
+
     }
 
     private List<ContextDocument> retrieveDocuments(String question, List<Product> inventoryProducts) {
