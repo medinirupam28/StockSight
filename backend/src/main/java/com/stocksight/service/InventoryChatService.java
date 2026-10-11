@@ -81,9 +81,12 @@ public class InventoryChatService {
             return response(answer, contextSummary, "lexical-rag");
         } 
 catch (RestClientException e) {
-    System.err.println("AI provider request failed: " + e.getMessage());
-    return response(    "The AI provider request failed. Check backend logs for details.",
-        contextSummary, "lexical-rag");
+    e.printStackTrace();
+    return response(
+        "AI provider unavailable. Please try again.",
+        contextSummary,
+        "lexical-rag"
+    );
 }
 
     }
