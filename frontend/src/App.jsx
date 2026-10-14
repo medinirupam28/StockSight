@@ -3,6 +3,7 @@ import { Link, Navigate, Route, Routes, useNavigate, useParams } from 'react-rou
 import api from './api'
 import { useAuth } from './auth/AuthContext'
 import ProtectedRoute from './auth/ProtectedRoute'
+import ReactMarkdown from 'react-markdown'
 
 async function loadAllProducts() {
   const firstPage = await api.get('/products', { params: { page: 0, size: 100 } })
@@ -28,12 +29,116 @@ function Shell({ children }) {
   </aside><main className="main">{children}</main></div>
 }
 function Login() {
-  const { login, register, user } = useAuth()
-  const [mode,setMode]=useState('login'), [username,setUsername]=useState(''), [password,setPassword]=useState(''), [error,setError]=useState(''), [busy,setBusy]=useState(false)
-  const nav=useNavigate()
-  if(user) return <Navigate to="/" replace />
-  async function submit(e) { e.preventDefault(); setError(''); setBusy(true); try { await (mode==='login'?login(username,password):register(username,password)); nav('/') } catch(err) { setError(err.response?.data?.error || err.response?.data?.message || 'Could not authenticate. Check the API and credentials.') } finally { setBusy(false) } }
-  return <div className="auth-page"><div className="auth-card"><div className="brand"><span className="brand-mark">S</span><div><b>StockSight</b><small>Inventory intelligence</small></div></div><h1>{mode==='login'?'Welcome back':'Create supplier account'}</h1><p className="muted">Know what you have. Predict what you need.</p><form onSubmit={submit}><label>Username<input value={username} onChange={e=>setUsername(e.target.value)} required minLength="3" autoComplete="username"/></label><label>Password<input type="password" value={password} onChange={e=>setPassword(e.target.value)} required minLength="8" autoComplete={mode==='login'?'current-password':'new-password'}/></label>{error&&<div className="alert danger">{error}</div>}<button className="primary full" disabled={busy}>{busy?'Please wait…':mode==='login'?'Sign in':'Create account'}</button></form><p className="switch">{mode==='login'?'New to StockSight?':'Already registered?'} <button className="link-btn" onClick={()=>{setMode(mode==='login'?'register':'login');setError('')}}>{mode==='login'?'Create account':'Sign in'}</button></p><p className="hint">Public registration creates SUPPLIER accounts only.</p></div></div>
+  const { login, user } = useAuth()
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [passwordFocused, setPasswordFocused] = useState(false)
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const nav = useNavigate()
+
+  if (user) return <Navigate to="/" replace />
+
+  async function submit(e) {
+    e.preventDefault()
+    setError('')
+    setBusy(true)
+    try {
+      await login(username, password)
+      nav('/')
+    } catch (err) {
+      setError(
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        'Could not authenticate. Check the API and credentials.'
+      )
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="brand">
+          <span className="brand-mark">S</span>
+          <div>
+            <b>StockSight</b>
+            <small>Inventory intelligence</small>
+          </div>
+        </div>
+        <h1>Welcome back</h1>
+        <p className="muted">Know what you have. Predict what you need.</p>
+        <form onSubmit={submit}>
+          <label>
+            Username
+            <input
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+              required
+              minLength={3}
+              autoComplete="username"
+            />
+          </label>
+          
+
+<label>
+  Password
+  <div className="password-field">
+    <input
+      type={showPassword ? 'text' : 'password'}
+      value={password}
+      onChange={e => setPassword(e.target.value)}
+      onFocus={() => setPasswordFocused(true)}
+      onBlur={() => setPasswordFocused(false)}
+      required
+      minLength={8}
+      autoComplete="current-password"
+    />
+
+    {passwordFocused && password.length > 0 && (
+      <button
+        type="button"
+        className="password-toggle"
+        onMouseDown={e => e.preventDefault()}
+        onClick={() => setShowPassword(value => !value)}
+        aria-label={showPassword ? 'Hide password' : 'Show password'}
+        title={showPassword ? 'Hide password' : 'Show password'}
+      >
+        {showPassword ? (
+          <svg viewBox="0 0 24 24" width="20" height="20"
+            fill="none" stroke="currentColor" strokeWidth="1.8"
+            strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 3l18 18" />
+            <path d="M10.6 10.6a2 2 0 002.8 2.8" />
+            <path d="M9.9 5.2A10.8 10.8 0 0112 5c5 0 8.5 4.5 9.5 7
+              a11 11 0 01-4 4.8" />
+            <path d="M6.2 6.2A12 12 0 002.5 12c1 2.5 4.5 7 9.5 7
+              a10 10 0 004-.8" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" width="20" height="20"
+            fill="none" stroke="currentColor" strokeWidth="1.8"
+            strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        )}
+      </button>
+    )}
+  </div>
+</label>
+
+
+          {error && <div className="alert danger">{error}</div>}
+          <button className="primary full" disabled={busy}>
+            {busy ? 'Please wait…' : 'Sign in'}
+          </button>
+        </form>
+      </div>
+    </div>
+  )
 }
 function Dashboard() {
  const [products,setProducts]=useState([]),[movements,setMovements]=useState([]),[error,setError]=useState(''),[loading,setLoading]=useState(true)
@@ -87,11 +192,146 @@ function MovementTable({movements}) {
  if(!movements.length)return <div className="empty">No movements recorded.</div>
  return <div className="table-wrap"><table><thead><tr><th>Product</th><th>Type</th><th>Quantity</th><th>Bill date</th><th>Delivery date</th></tr></thead><tbody>{movements.map(m=><tr key={m.id}><td><Link className="text-link" to={`/products/${m.productId}`}>{m.productName}</Link></td><td><span className={`pill ${m.movementType==='INWARD'?'pill-ok':'pill-neutral'}`}>{m.movementType}</span></td><td>{m.quantity}</td><td>{m.billDate}</td><td>{m.deliveryDate}</td></tr>)}</tbody></table></div>
 }
+
 function Assistant() {
- const [question,setQuestion]=useState('Which products need reordering?'),[messages,setMessages]=useState([{role:'assistant',content:'Hi! I can explain current stock, safety thresholds, recent outward movements and reorder suggestions using the inventory data available to StockSight.'}]),[busy,setBusy]=useState(false)
- async function send(e){e.preventDefault();if(!question.trim()||busy)return;const q=question.trim();setMessages(m=>[...m,{role:'user',content:q}]);setQuestion('');setBusy(true);try{const r=await api.post('/ai/chat',{question:q});setMessages(m=>[...m,{role:'assistant',content:r.data.answer,contextSummary:r.data.contextSummary}])}catch(err){setMessages(m=>[...m,{role:'assistant',content:err.response?.data?.error||'Could not reach the assistant. Check API connectivity.'}])}finally{setBusy(false)}}
- return <Shell><header className="page-head"><div><div className="eyebrow">STOCKSIGHT ASSISTANT</div><h1>Ask your inventory</h1><p className="muted">Answers use retrieved inventory records and configured model responses when available.</p></div></header><section className="chat-panel"><div className="chat-heading"><div className="assistant-icon">✳</div><div><b>Inventory assistant</b><small>Live inventory retrieval · provider status reported per answer</small></div></div><div className="messages">{messages.map((m,i)=><div key={i} className={`message ${m.role}`}><div className="message-role">{m.role==='assistant'?'StockSight':'You'}</div><div>{m.content}</div>{m.contextSummary&&<small className="hint">{m.contextSummary}</small>}</div>)}{busy&&<div className="message assistant"><div className="message-role">StockSight</div>Retrieving inventory context…</div>}</div><form className="chat-input" onSubmit={send}><input value={question} onChange={e=>setQuestion(e.target.value)} placeholder="Ask about a SKU, stock, consumption, reorders or anomalies…" maxLength="1000"/><button className="primary" disabled={busy||!question.trim()}>Send ↑</button></form><div className="hint">Recommendations use recorded movements and configured stock thresholds. Verify operational decisions against the ledger.</div></section></Shell>
+  const [question, setQuestion] = useState('Which products need reordering?');
+  const [messages, setMessages] = useState([
+    {
+      role: 'assistant',
+      content:
+        'Hi! I can explain current stock, safety thresholds, recent outward movements and reorder suggestions using the inventory data available to StockSight.',
+    },
+  ]);
+  const [busy, setBusy] = useState(false);
+
+  const faqs = [
+    'Which products need reordering?',
+    'What is the current stock of each product?',
+    'Which products are below their safety threshold?',
+    'Which products have the highest consumption?',
+    'Summarize recent stock movements.',
+    'Are there any unusual stock movements?',
+  ];
+
+  async function send(e, selectedQuestion) {
+    e?.preventDefault();
+
+    const text = (selectedQuestion ?? question).trim();
+    if (!text || busy) return;
+
+    setMessages((prev) => [...prev, { role: 'user', content: text }]);
+    setQuestion('');
+    setBusy(true);
+
+    try {
+const { data } = await api.post('/ai/chat', { question: text });      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: data.answer ?? 'No answer was returned.',
+          contextSummary: data.contextSummary,
+        },
+      ]);
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content:
+            err.response?.data?.message ??
+            'Unable to get an answer. Please try again.',
+        },
+      ]);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Shell>
+      <header className="page-head">
+        <div>
+          <div className="eyebrow">STOCKSIGHT ASSISTANT</div>
+          <h1>Ask your inventory</h1>
+          <p className="muted">
+            Get inventory answers and reorder insights using your stock data.
+          </p>
+        </div>
+      </header>
+
+      <section className="chat-panel">
+        <div className="chat-heading">
+          <div className="assistant-icon">✳</div>
+          <div>
+            <b>Inventory assistant</b>
+            <small>Live inventory retrieval · AI-powered answers</small>
+          </div>
+        </div>
+
+        <div className="messages">
+          {messages.map((m, i) => (
+            <div key={i} className={`message ${m.role}`}>
+              <div className="message-role">
+                {m.role === 'assistant' ? 'StockSight' : 'You'}
+              </div>
+              <div className="message-content">
+  <ReactMarkdown>{m.content}</ReactMarkdown>
+</div>
+              {m.contextSummary && (
+                <small className="hint">{m.contextSummary}</small>
+              )}
+            </div>
+          ))}
+
+          {busy && (
+            <div className="message assistant">
+              <div className="message-role">StockSight</div>
+              Analyzing inventory…
+            </div>
+          )}
+        </div>
+
+        <div className="faq-section">
+          <b>Frequently asked questions</b>
+          <div className="faq-list">
+            {faqs.map((faq) => (
+              <button
+                key={faq}
+                type="button"
+                className="faq-button"
+                disabled={busy}
+                onClick={() => send(null, faq)}
+              >
+                {faq} ↗
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <form className="chat-input" onSubmit={send}>
+          <input
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder="Ask about stock, consumption, reorders or anomalies…"
+            maxLength={1000}
+          />
+          <button
+            className="primary"
+            disabled={busy || !question.trim()}
+          >
+            Send ↑
+          </button>
+        </form>
+
+        <div className="hint">
+          Recommendations use recorded movements and configured stock
+          thresholds. Verify operational decisions against the inventory ledger.
+        </div>
+      </section>
+    </Shell>
+  );
 }
+
 export default function App() {
  return <Routes><Route path="/login" element={<Login/>}/><Route element={<ProtectedRoute/>}><Route path="/" element={<Dashboard/>}/><Route path="/products" element={<Products/>}/><Route path="/products/:id" element={<ProductDetails/>}/><Route path="/movements" element={<Movements/>}/><Route path="/assistant" element={<Assistant/>}/></Route><Route path="*" element={<Navigate to="/" replace/>}/></Routes>
 }

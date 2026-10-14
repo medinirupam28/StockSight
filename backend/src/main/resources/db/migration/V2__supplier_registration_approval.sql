@@ -1,0 +1,8 @@
+
+ALTER TABLE users
+    ADD COLUMN company_name VARCHAR(160) NULL,
+    ADD COLUMN contact_name VARCHAR(120) NULL,
+    ADD COLUMN email VARCHAR(180) NULL,
+    ADD COLUMN phone VARCHAR(40) NULL,
+    ADD COLUMN product_category VARCHAR(120) NULL,
+    ADD COLUMN approval_status VARCHAR(20) NOT NULL DEFAULT 'APPROVED';
